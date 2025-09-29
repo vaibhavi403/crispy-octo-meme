@@ -30,47 +30,21 @@ export function LoginForm() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // Create mock user data
+      // Create minimal user data - just email and role initially
       const userId = Math.random().toString(36).substr(2, 9)
       const userData = {
         id: userId,
         role: userRole,
         email: loginType === "email" ? "user@example.com" : undefined,
         phone: loginType === "phone" ? "+91 98765 43210" : undefined,
-        first_name: userRole === "client" ? "John" : "Chef",
-        last_name: userRole === "client" ? "Doe" : "Priya",
-        display_name: userRole === "client" ? "John Doe" : "Chef Priya",
-        profile_image_path: userRole === "client" ? "/placeholder-user.jpg" : "/professional-indian-female-chef-smiling-in-kitchen.jpg"
+        // Everything else will be undefined until user adds it later
+        display_name: loginType === "email" ? "user@example.com" : "+91 98765 43210"
       }
 
-      // Try to get existing profile from Supabase
-      console.log('Checking for existing profile...')
-      const { data: existingProfile, error: fetchError } = await getProfile(userId)
-      
-      if (!existingProfile && !fetchError) {
-        // Create profile in Supabase if it doesn't exist
-        console.log('Creating new profile in Supabase...')
-        const { data: newProfile, error: createError } = await createProfile({
-          id: userId,
-          role: userRole,
-          email: userData.email,
-          phone: userData.phone,
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          display_name: userData.display_name,
-          profile_image_path: userData.profile_image_path
-        })
-        
-        if (createError) {
-          console.error('Error creating profile:', createError)
-        } else {
-          console.log('Profile created successfully:', newProfile)
-        }
-      } else if (existingProfile) {
-        console.log('Using existing profile:', existingProfile)
-        // Use existing profile data
-        Object.assign(userData, existingProfile)
-      }
+      console.log('Login: Created minimal user data:', userData)
+
+      // Don't try to create/fetch from Supabase during mock login
+      // Just use the minimal user data
 
       login(userData)
 
@@ -96,10 +70,8 @@ export function LoginForm() {
       id: Math.random().toString(36).substr(2, 9),
       role: userRole,
       email: "user.google@example.com",
-      first_name: userRole === "client" ? "Google" : "Chef",
-      last_name: userRole === "client" ? "User" : "Google",
-      display_name: userRole === "client" ? "Google User" : "Chef Google",
-      profile_image_path: userRole === "client" ? "/placeholder-user.jpg" : "/professional-indian-female-chef-smiling-in-kitchen.jpg"
+      display_name: "user.google@example.com"
+      // Keep other fields undefined until user adds them
     }
 
     login(userData)
@@ -356,13 +328,6 @@ export function LoginForm() {
                 </svg>
                 Continue with Google
               </Button>
-
-              <p className="text-center text-sm text-muted-foreground">
-                New chef?{" "}
-                <Link href="/chef/join" className="text-primary hover:underline">
-                  Join as Chef
-                </Link>
-              </p>
             </CardContent>
           </Card>
         </TabsContent>

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, ChefHat, User } from "lucide-react"
+import { Menu, X, ChefHat, User, LogOut } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,10 @@ import { ProfileButton } from "@/components/profile-button"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { isAuthenticated, user, logout } = useAuth()
+  const { isAuthenticated, user, logout, isLoading } = useAuth()
+
+  // Debug logging
+  console.log("Header render - isAuthenticated:", isAuthenticated, "user:", user, "isLoading:", isLoading)
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -46,20 +49,30 @@ export function Header() {
 
           {/* Desktop Auth/User Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            {!isAuthenticated ? (
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ) : !isAuthenticated ? (
               <>
                 <Link href="/login">
                   <Button variant="ghost">Login</Button>
                 </Link>
-                <Link href="/auth/signup">
-                  <Button className="bg-orange-500 hover:bg-orange-600">Sign Up</Button>
-                </Link>
-                <Link href="/chef/join">
-                  <Button variant="secondary">Join as Chef</Button>
-                </Link>
               </>
             ) : (
-              <ProfileButton />
+              <>
+                <ProfileButton />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={logout}
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </>
             )}
           </div>
 
@@ -86,19 +99,16 @@ export function Header() {
                 About
               </Link>
 
-              {!isAuthenticated ? (
+              {isLoading ? (
+                <div className="flex flex-col space-y-2 pt-4 border-t">
+                  <div className="w-full h-10 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="w-full h-10 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ) : !isAuthenticated ? (
                 <div className="flex flex-col space-y-2 pt-4 border-t">
                   <Link href="/login">
                     <Button variant="ghost" className="w-full">
                       Login
-                    </Button>
-                  </Link>
-                  <Link href="/auth/signup">
-                    <Button className="w-full bg-orange-500 hover:bg-orange-600">Sign Up</Button>
-                  </Link>
-                  <Link href="/chef/join">
-                    <Button variant="secondary" className="w-full">
-                      Join as Chef
                     </Button>
                   </Link>
                 </div>
@@ -141,13 +151,6 @@ export function Header() {
                         </Button>
                       </Link>
                     </>
-                  )}
-                  {user?.userType === "admin" && (
-                    <Link href="/admin">
-                      <Button variant="ghost" className="w-full justify-start">
-                        Admin Panel
-                      </Button>
-                    </Link>
                   )}
                   <Button variant="ghost" className="w-full justify-start">
                     Settings

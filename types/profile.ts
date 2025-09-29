@@ -1,4 +1,4 @@
-// Profile types based on our SQL schema
+// Profile types matching the actual database schema
 export interface BaseProfile {
   id: string
   role: "chef" | "client"
@@ -14,23 +14,14 @@ export interface BaseProfile {
   created_at?: string
 }
 
-// Chef-specific profile fields
+// Chef profile (same as base for now)
 export interface ChefProfile extends BaseProfile {
   role: "chef"
-  experience?: string
-  specialties?: string
-  hourly_rate?: number
-  certifications?: string
-  availability?: string
 }
 
-// Client-specific profile fields
+// Client profile (same as base for now)
 export interface ClientProfile extends BaseProfile {
   role: "client"
-  dietary_preferences?: string
-  favorite_cuisines?: string
-  allergies?: string
-  cooking_skill_level?: string
 }
 
 // Union type for all profiles
@@ -49,27 +40,17 @@ export interface ProfileFormData {
   dob?: string
   bio?: string
   profile_image_path?: string
-  // Chef fields
-  experience?: string
-  specialties?: string
-  hourly_rate?: number | string
-  certifications?: string
-  availability?: string
-  // Client fields
-  dietary_preferences?: string
-  favorite_cuisines?: string
-  allergies?: string
-  cooking_skill_level?: string
 }
 
 // Props for profile components
 export interface ProfileViewProps {
-  profileData: Profile
+  profile: Profile | null
   onEdit: () => void
 }
 
 export interface ProfileEditFormProps {
-  initialData?: ProfileFormData
-  onSave?: (data: Profile) => void
+  profile?: Profile | null
+  onSave?: (data: ProfileFormData) => void
+  onCancel?: () => void
   isEditable?: boolean
 }

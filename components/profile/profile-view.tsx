@@ -29,12 +29,30 @@ export function ProfileView({ profile, onEdit }: ProfileViewProps) {
   }
 
   const getInitials = () => {
-    const name = profile.display_name || `${profile.first_name} ${profile.last_name}`
-    return name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    if (profile.display_name) {
+      return profile.display_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    }
+    if (profile.first_name || profile.last_name) {
+      const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+      return name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    }
+    if (profile.email) {
+      return profile.email.substring(0, 2).toUpperCase()
+    }
+    return "U"
   }
 
   const getDisplayName = () => {
-    return profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User'
+    if (profile.display_name) {
+      return profile.display_name
+    }
+    if (profile.first_name || profile.last_name) {
+      return `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+    }
+    if (profile.email) {
+      return profile.email
+    }
+    return 'User'
   }
 
   const formatDate = (dateString?: string) => {
@@ -156,56 +174,6 @@ export function ProfileView({ profile, onEdit }: ProfileViewProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Role-specific Information */}
-      {user?.role === "chef" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ChefHat className="h-5 w-5" />
-              Professional Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-1">Experience</h4>
-                <p className="text-lg">{profile?.experience || "Not specified"}</p>
-              </div>
-              <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-1">Hourly Rate</h4>
-                <p className="text-lg">
-                  {profile?.hourly_rate ? `₹${profile.hourly_rate}/hour` : "Not set"}
-                </p>
-              </div>
-              <div className="md:col-span-2">
-                <h4 className="font-medium text-sm text-muted-foreground mb-1">Specialties</h4>
-                <p className="text-lg">{profile?.specialties || "Not specified"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {user?.role === "client" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Preferences</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-1">Dietary Preferences</h4>
-                <p className="text-lg">{profile?.dietary_preferences || "None specified"}</p>
-              </div>
-              <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-1">Favorite Cuisines</h4>
-                <p className="text-lg">{profile?.favorite_cuisines || "None specified"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

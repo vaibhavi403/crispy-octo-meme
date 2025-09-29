@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, X, Plus, Save, Camera, Star, MapPin, Clock } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
 const cuisineOptions = [
   "North Indian",
@@ -37,6 +38,8 @@ const cuisineOptions = [
 const experienceLevels = ["1-2 years", "3-5 years", "6-10 years", "10+ years"]
 
 export function ChefProfileManagement() {
+  const { user } = useAuth()
+  
   const [profileData, setProfileData] = useState(() => {
     if (typeof window !== "undefined") {
       const savedProfile = localStorage.getItem("chefProfile")
@@ -44,17 +47,18 @@ export function ChefProfileManagement() {
         return JSON.parse(savedProfile)
       }
     }
+    // Use actual user data instead of hardcoded values
     return {
-      firstName: "Priya",
-      lastName: "Sharma",
-      email: "priya.sharma@email.com",
-      phone: "+91 98765 43210",
-      location: "Mumbai, Maharashtra",
-      experience: "6-10 years",
-      hourlyRate: 800,
-      bio: "Passionate chef with 8 years of experience in authentic North Indian cuisine. Specialized in traditional Punjabi and Mughlai dishes. I believe in using fresh, locally sourced ingredients to create memorable dining experiences.",
-      specialties: ["North Indian", "Punjabi", "Mughlai"],
-      profileImage: "/professional-indian-female-chef-smiling-in-kitchen.jpg",
+      firstName: user?.first_name || "",
+      lastName: user?.last_name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      location: user?.location || "",
+      experience: "",
+      hourlyRate: 0,
+      bio: user?.bio || "",
+      specialties: [],
+      profileImage: user?.profile_image_path || "/professional-indian-female-chef-smiling-in-kitchen.jpg",
     }
   })
 
@@ -75,6 +79,22 @@ export function ChefProfileManagement() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
+
+  // Update profile data when user changes
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({
+        ...prev,
+        firstName: user.first_name || prev.firstName,
+        lastName: user.last_name || prev.lastName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        location: user.location || prev.location,
+        bio: user.bio || prev.bio,
+        profileImage: user.profile_image_path || prev.profileImage,
+      }))
+    }
+  }, [user])
 
   useEffect(() => {
     if (typeof window !== "undefined") {

@@ -14,7 +14,7 @@ import {
   Clock,
   MapPin,
   Star,
-  DollarSign,
+  Banknote,
   Users,
   TrendingUp,
   Bell,
@@ -24,18 +24,7 @@ import {
   MessageCircle,
 } from "lucide-react"
 import Link from "next/link"
-
-// Mock data
-const chefProfile = {
-  name: "Chef Priya Sharma",
-  image: "/professional-indian-female-chef-smiling-in-kitchen.jpg",
-  specialty: "North Indian Cuisine",
-  rating: 4.9,
-  reviews: 127,
-  location: "Mumbai, Maharashtra",
-  isAvailable: true,
-  verified: true,
-}
+import { useAuth } from "@/contexts/auth-context"
 
 const bookingRequests = [
   {
@@ -131,6 +120,20 @@ const earnings = {
 }
 
 export function ChefDashboard() {
+  const { user } = useAuth()
+  
+  // Mock data with actual user data
+  const chefProfile = {
+    name: user?.display_name || `${user?.first_name} ${user?.last_name}` || "Chef",
+    image: user?.profile_image_path || "/professional-indian-female-chef-smiling-in-kitchen.jpg",
+    specialty: "North Indian Cuisine",
+    rating: 4.9,
+    reviews: 127,
+    location: user?.location || "Mumbai, Maharashtra",
+    isAvailable: true,
+    verified: true,
+  }
+  
   const [isAvailable, setIsAvailable] = useState(chefProfile.isAvailable)
   const [bookings, setBookings] = useState(bookingRequests)
   const [processingBooking, setProcessingBooking] = useState<number | null>(null)
@@ -230,7 +233,7 @@ export function ChefDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-primary" />
+                  <Banknote className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">₹{earnings.thisMonth.toLocaleString()}</p>

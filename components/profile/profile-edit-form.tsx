@@ -39,13 +39,6 @@ export function ProfileEditForm({ profile, onSave, onCancel, isEditable = true }
     dob: "",
     bio: "",
     profile_image_path: "",
-    // Chef-specific fields
-    experience: "",
-    specialties: "",
-    hourly_rate: "",
-    // Client-specific fields
-    dietary_preferences: "",
-    favorite_cuisines: "",
   })
 
   useEffect(() => {
@@ -60,11 +53,6 @@ export function ProfileEditForm({ profile, onSave, onCancel, isEditable = true }
         dob: profile.dob || "",
         bio: profile.bio || "",
         profile_image_path: profile.profile_image_path || "",
-        experience: profile.role === "chef" ? profile.experience || "" : "",
-        specialties: profile.role === "chef" ? profile.specialties || "" : "",
-        hourly_rate: profile.role === "chef" ? String(profile.hourly_rate || "") : "",
-        dietary_preferences: profile.role === "client" ? profile.dietary_preferences || "" : "",
-        favorite_cuisines: profile.role === "client" ? profile.favorite_cuisines || "" : "",
       })
     } else if (user) {
       setProfileData({
@@ -77,11 +65,6 @@ export function ProfileEditForm({ profile, onSave, onCancel, isEditable = true }
         dob: user.dob || "",
         bio: user.bio || "",
         profile_image_path: user.profile_image_path || "",
-        experience: user.role === "chef" ? user.experience || "" : "",
-        specialties: user.role === "chef" ? user.specialties || "" : "",
-        hourly_rate: user.role === "chef" ? String(user.hourly_rate || "") : "",
-        dietary_preferences: user.role === "client" ? user.dietary_preferences || "" : "",
-        favorite_cuisines: user.role === "client" ? user.favorite_cuisines || "" : "",
       })
     }
   }, [profile, user])
@@ -311,88 +294,16 @@ export function ProfileEditForm({ profile, onSave, onCancel, isEditable = true }
 
             <TabsContent value="about" className="space-y-4">
               <div>
-                <Label htmlFor="bio">
-                  {user?.role === "chef" ? "Professional Bio" : "About Me"}
-                </Label>
+                <Label htmlFor="bio">About Me</Label>
                 <Textarea
                   id="bio"
                   value={profileData.bio || ""}
                   onChange={(e) => handleInputChange("bio", e.target.value)}
-                  placeholder={
-                    user?.role === "chef" 
-                      ? "Describe your culinary experience, specialties, and what makes you unique as a chef..."
-                      : "Tell us about yourself, your food preferences, dietary requirements, etc..."
-                  }
+                  placeholder="Tell us about yourself..."
                   rows={6}
                   disabled={!isEditable}
                 />
               </div>
-
-              {/* Chef-specific fields */}
-              {user?.role === "chef" && (
-                <>
-                  <div>
-                    <Label htmlFor="experience">Years of Experience</Label>
-                    <Input
-                      id="experience"
-                      value={profileData.experience || ""}
-                      onChange={(e) => handleInputChange("experience", e.target.value)}
-                      placeholder="e.g., 5 years"
-                      disabled={!isEditable}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="specialties">Specialties/Cuisines</Label>
-                    <Input
-                      id="specialties"
-                      value={profileData.specialties || ""}
-                      onChange={(e) => handleInputChange("specialties", e.target.value)}
-                      placeholder="e.g., North Indian, Italian, Continental"
-                      disabled={!isEditable}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="hourly_rate">Hourly Rate (₹)</Label>
-                    <Input
-                      id="hourly_rate"
-                      type="number"
-                      value={profileData.hourly_rate || ""}
-                      onChange={(e) => handleInputChange("hourly_rate", e.target.value)}
-                      placeholder="e.g., 800"
-                      disabled={!isEditable}
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Client-specific fields */}
-              {user?.role === "client" && (
-                <>
-                  <div>
-                    <Label htmlFor="dietary_preferences">Dietary Preferences</Label>
-                    <Input
-                      id="dietary_preferences"
-                      value={profileData.dietary_preferences || ""}
-                      onChange={(e) => handleInputChange("dietary_preferences", e.target.value)}
-                      placeholder="e.g., Vegetarian, Vegan, No nuts"
-                      disabled={!isEditable}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="favorite_cuisines">Favorite Cuisines</Label>
-                    <Input
-                      id="favorite_cuisines"
-                      value={profileData.favorite_cuisines || ""}
-                      onChange={(e) => handleInputChange("favorite_cuisines", e.target.value)}
-                      placeholder="e.g., Indian, Italian, Chinese"
-                      disabled={!isEditable}
-                    />
-                  </div>
-                </>
-              )}
             </TabsContent>
           </Tabs>
 

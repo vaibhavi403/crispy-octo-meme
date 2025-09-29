@@ -1,8 +1,10 @@
 import { type NextRequest } from 'next/server'
-import { updateSession } from './utils/supabase/middleware'
+// import { updateSession } from './utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // Disabled Supabase middleware to fix login redirect issue
+  // Since we're using localStorage auth, we don't need Supabase session middleware
+  // return await updateSession(request)
 }
 
 export const config = {
