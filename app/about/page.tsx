@@ -39,22 +39,16 @@ export default function AboutPage() {
 
   const team = [
     {
-      name: "Arjun Mehta",
-      role: "Founder & CEO",
-      image: "/indian-businessman.jpg",
-      bio: "Former chef turned entrepreneur with 15+ years in the culinary industry.",
+      name: "Aditi Jogdand",
+      role: "Head of Development & Technical Operations",
+      image: "/team_member1.jpg",
+      bio: "Leading our technical vision and development strategy. Aditi ensures our platform delivers a seamless, secure, and innovative experience for both chefs and customers.",
     },
     {
-      name: "Priya Sharma",
-      role: "Head of Chef Relations",
-      image: "/indian-businesswoman.jpg",
-      bio: "Culinary expert who ensures our chef community maintains the highest standards.",
-    },
-    {
-      name: "Vikram Singh",
-      role: "CTO",
-      image: "/indian-tech-professional.jpg",
-      bio: "Technology leader passionate about connecting people through innovative platforms.",
+      name: "Vaibhavi Pimpale",
+      role: "Head of Marketing",
+      image: "/team_member2.jpg",
+      bio: "Driving brand growth and community engagement. Vaibhavi connects our culinary platform with food enthusiasts and chefs across India through strategic marketing initiatives.",
     },
   ]
 
@@ -169,20 +163,22 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="flex flex-wrap justify-center gap-8 max-w-5xl mx-auto">
             {team.map((member) => (
-              <Card key={member.name} className="text-center">
-                <CardContent className="p-6">
+              <Card key={member.name} className="text-center w-full sm:w-96 flex-shrink-0">
+                <CardContent className="p-8">
                   <img
                     src={member.image || "/placeholder.svg"}
                     alt={member.name}
-                    className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+                    className="w-40 h-40 rounded-full mx-auto mb-6 object-cover border-4 border-orange-100"
                   />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-1">{member.name}</h3>
-                  <Badge variant="secondary" className="mb-3">
-                    {member.role}
-                  </Badge>
-                  <p className="text-gray-600 text-sm">{member.bio}</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">{member.name}</h3>
+                  <div className="mb-4">
+                    <Badge variant="secondary" className="px-3 py-1 text-sm whitespace-normal leading-relaxed">
+                      {member.role}
+                    </Badge>
+                  </div>
+                  <p className="text-gray-600 leading-relaxed">{member.bio}</p>
                 </CardContent>
               </Card>
             ))}
@@ -191,7 +187,7 @@ export default function AboutPage() {
       </section>
 
       {/* Story */}
-      <section className="py-16 px-4 bg-white">
+      {/* <section className="py-16 px-4 bg-white">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Story</h2>
@@ -223,7 +219,7 @@ export default function AboutPage() {
             </p>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA */}
       <section className="py-16 px-4">

@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { createProfile, getProfile } from "@/utils/supabase/profiles"
 import { createClient } from "@/utils/supabase/client"
+import { ensureUserProfile } from "@/utils/supabase/ensure-profile"
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -50,26 +51,28 @@ export function LoginForm() {
 
       console.log('Supabase Auth login successful:', authData)
 
-      // Try to get the user's profile
+      // Ensure user has a profile (create one if they don't)
       let userData
       if (authData.user) {
         try {
-          const profileResult = await getProfile(authData.user.id)
+          console.log('Ensuring user has a profile...')
+          const profileResult = await ensureUserProfile(authData.user.id, { role: userRole })
+          
           if (profileResult.data) {
             userData = profileResult.data
-            console.log('Profile loaded from database:', userData)
+            console.log('Profile loaded/created:', userData)
           } else {
-            // Profile doesn't exist, create minimal user data
+            console.error('Failed to ensure profile:', profileResult.error)
+            // Fallback to minimal user data
             userData = {
               id: authData.user.id,
               role: userRole,
               email: authData.user.email,
               display_name: authData.user.email || 'User'
             }
-            console.log('No profile found, using minimal data:', userData)
           }
         } catch (error) {
-          console.error('Error fetching profile:', error)
+          console.error('Error ensuring profile:', error)
           // Fallback to minimal user data
           userData = {
             id: authData.user.id,
@@ -180,6 +183,7 @@ export function LoginForm() {
                   <Label htmlFor="customer-login">{loginType === "email" ? "Email Address" : "Phone Number"}</Label>
                   <Input
                     id="customer-login"
+                    name="emailOrPhone"
                     type={loginType === "email" ? "email" : "tel"}
                     placeholder={loginType === "email" ? "Enter your email" : "Enter your phone number"}
                     required
@@ -191,6 +195,7 @@ export function LoginForm() {
                   <div className="relative">
                     <Input
                       id="customer-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       required
@@ -300,6 +305,7 @@ export function LoginForm() {
                   <Label htmlFor="chef-login">{loginType === "email" ? "Email Address" : "Phone Number"}</Label>
                   <Input
                     id="chef-login"
+                    name="emailOrPhone"
                     type={loginType === "email" ? "email" : "tel"}
                     placeholder={loginType === "email" ? "Enter your email" : "Enter your phone number"}
                     required
@@ -311,6 +317,7 @@ export function LoginForm() {
                   <div className="relative">
                     <Input
                       id="chef-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       required

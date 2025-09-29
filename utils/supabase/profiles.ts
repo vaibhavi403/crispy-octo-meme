@@ -12,16 +12,10 @@ export interface ProfileData {
   email?: string
   phone?: string
   location?: string
-  dob?: string
+  dob?: string // date field
   bio?: string
   profile_image_path?: string
-  // Chef-specific fields
-  experience?: string
-  specialties?: string
-  hourly_rate?: number
-  // Client-specific fields
-  dietary_preferences?: string
-  favorite_cuisines?: string
+  created_at?: string // timestamp with time zone
 }
 
 // Create a new profile
@@ -46,7 +40,36 @@ export async function createProfile(profileData: Partial<ProfileData>) {
   }
 }
 
-// Get a profile by ID
+// Get a profile by ID (public access - no auth required)
+export async function getPublicProfile(id: string) {
+  try {
+    // Create a client without authentication for public access
+    const { createClient } = await import('@supabase/supabase-js')
+    const publicSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    )
+
+    const { data, error } = await publicSupabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      console.error('Error fetching public profile:', error)
+      return { data: null, error }
+    }
+
+    console.log('Public profile fetched successfully:', data)
+    return { data: data as Profile, error: null }
+  } catch (error) {
+    console.error('Unexpected error fetching public profile:', error)
+    return { data: null, error }
+  }
+}
+
+// Get a profile by ID (authenticated access - for editing)
 export async function getProfile(id: string) {
   try {
     const { data, error } = await supabase
@@ -112,7 +135,36 @@ export async function deleteProfile(id: string) {
   }
 }
 
-// Get all profiles by role
+// Get all profiles by role (public access)
+export async function getPublicProfilesByRole(role: "chef" | "client") {
+  try {
+    // Create a client without authentication for public access
+    const { createClient } = await import('@supabase/supabase-js')
+    const publicSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    )
+
+    const { data, error } = await publicSupabase
+      .from('profiles')
+      .select('*')
+      .eq('role', role)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching public profiles by role:', error)
+      return { data: null, error }
+    }
+
+    console.log(`Public profiles fetched successfully for role ${role}:`, data?.length || 0, 'profiles')
+    return { data, error: null }
+  } catch (error) {
+    console.error('Unexpected error fetching public profiles by role:', error)
+    return { data: null, error }
+  }
+}
+
+// Get all profiles by role (authenticated access)
 export async function getProfilesByRole(role: "chef" | "client") {
   try {
     const { data, error } = await supabase

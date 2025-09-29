@@ -77,40 +77,45 @@ export function SignupForm() {
 
       console.log('Supabase Auth signup successful:', authData)
 
-      // Create profile data
-      const userData = {
-        id: authData.user?.id,
-        role: userRole,
-        email: signupType === "email" ? email : undefined,
-        phone: signupType === "phone" ? phone : undefined,
-        first_name: firstName,
-        last_name: lastName,
-        display_name: `${firstName} ${lastName}`,
-        created_at: new Date().toISOString()
-      }
+      if (authData.user) {
+        // Wait a moment for the auth session to be established
+        await new Promise(resolve => setTimeout(resolve, 1000))
 
-      console.log('Creating profile with data:', userData)
-
-      // Create profile in database (this will work now that user is authenticated)
-      try {
-        const result = await createProfile(userData)
-        if (result.error) {
-          console.error('Profile creation failed:', result.error)
-          // Don't fail completely - the user account was created
-          console.log('User account created but profile creation failed')
-        } else {
-          console.log('Profile successfully created:', result.data)
+        // Create profile data
+        const userData = {
+          id: authData.user.id,
+          role: userRole,
+          email: signupType === "email" ? email : undefined,
+          phone: signupType === "phone" ? phone : undefined,
+          first_name: firstName,
+          last_name: lastName,
+          display_name: `${firstName} ${lastName}`,
+          created_at: new Date().toISOString()
         }
-      } catch (error) {
-        console.error('Unexpected error during profile creation:', error)
-        // Don't fail completely - the user account was created
+
+        console.log('Creating profile with data:', userData)
+
+        // Create profile in database using the authenticated session
+        try {
+          const result = await createProfile(userData)
+          if (result.error) {
+            console.error('Profile creation failed:', result.error)
+            console.log('Profile creation error details:', JSON.stringify(result.error, null, 2))
+            // Still continue - user account was created successfully
+          } else {
+            console.log('Profile successfully created:', result.data)
+          }
+        } catch (error) {
+          console.error('Unexpected error during profile creation:', error)
+          // Still continue - user account was created successfully
+        }
+
+        // Update local auth context
+        login(userData as any) // Type will be properly handled by the auth context
+
+        // Redirect to confirmation page
+        router.push("/check-email")
       }
-
-      // Update local auth context
-      login(userData as any) // Type will be properly handled by the auth context
-
-      // Redirect to confirmation page
-      router.push("/check-email")
 
     } catch (error) {
       console.error('Signup error:', error)
