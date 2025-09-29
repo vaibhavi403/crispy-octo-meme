@@ -1,17 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Mail, CheckCircle, RefreshCw, ArrowLeft, Clock, Sparkles } from 'lucide-react'
+import { Mail, CheckCircle, RefreshCw, ArrowLeft, Clock, Sparkles, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import Link from 'next/link'
+import { useAuth } from '@/contexts/auth-context'
 
 export default function CheckEmailPage() {
   const [timeLeft, setTimeLeft] = useState(60)
   const [canResend, setCanResend] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const { user, isAuthenticated } = useAuth()
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -51,7 +53,10 @@ export default function CheckEmailPage() {
               Check Your Email
             </CardTitle>
             <CardDescription className="text-gray-600 leading-relaxed">
-              We&apos;ve sent a magic link to your email address. Click the link to complete your sign-up and start your culinary journey!
+              {isAuthenticated 
+                ? `Welcome ${user?.display_name || user?.first_name || 'there'}! Your account has been created successfully. You can start exploring right away or wait for the email confirmation.`
+                : "We've sent a magic link to your email address. Click the link to complete your sign-up and start your culinary journey!"
+              }
             </CardDescription>
           </div>
         </CardHeader>
@@ -64,6 +69,20 @@ export default function CheckEmailPage() {
                 Email sent successfully! Check your inbox.
               </AlertDescription>
             </Alert>
+          )}
+
+          {isAuthenticated && (
+            <div className="space-y-3">
+              <Link href={user?.role === "chef" ? "/chef/dashboard" : "/dashboard"}>
+                <Button className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-105">
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  Continue to {user?.role === "chef" ? "Chef " : ""}Dashboard
+                </Button>
+              </Link>
+              <div className="text-center">
+                <span className="text-xs text-gray-500">or</span>
+              </div>
+            </div>
           )}
 
           <div className="space-y-4">

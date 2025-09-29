@@ -14,6 +14,7 @@ import { ChefHat, Mail, Phone, Eye, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { createProfile, getProfile } from "@/utils/supabase/profiles"
+import { createClient } from "@/utils/supabase/client"
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -27,35 +28,72 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const formData = new FormData(e.target as HTMLFormElement)
+      const emailOrPhone = formData.get("emailOrPhone") as string
+      const password = formData.get("password") as string
 
-      // Create minimal user data - just email and role initially
-      const userId = Math.random().toString(36).substr(2, 9)
-      const userData = {
-        id: userId,
-        role: userRole,
-        email: loginType === "email" ? "user@example.com" : undefined,
-        phone: loginType === "phone" ? "+91 98765 43210" : undefined,
-        // Everything else will be undefined until user adds it later
-        display_name: loginType === "email" ? "user@example.com" : "+91 98765 43210"
+      const supabase = createClient()
+
+      // Try to sign in with Supabase Auth
+      console.log('Attempting Supabase Auth login...')
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: emailOrPhone,
+        password: password
+      })
+
+      if (authError) {
+        console.error('Supabase Auth login failed:', authError)
+        alert(`Login failed: ${authError.message}`)
+        setIsLoading(false)
+        return
       }
 
-      console.log('Login: Created minimal user data:', userData)
+      console.log('Supabase Auth login successful:', authData)
 
-      // Don't try to create/fetch from Supabase during mock login
-      // Just use the minimal user data
-
-      login(userData)
-
-      // Redirect to appropriate dashboard
-      if (userRole === "client") {
-        router.push("/dashboard")
-      } else {
-        router.push("/chef/dashboard")
+      // Try to get the user's profile
+      let userData
+      if (authData.user) {
+        try {
+          const profileResult = await getProfile(authData.user.id)
+          if (profileResult.data) {
+            userData = profileResult.data
+            console.log('Profile loaded from database:', userData)
+          } else {
+            // Profile doesn't exist, create minimal user data
+            userData = {
+              id: authData.user.id,
+              role: userRole,
+              email: authData.user.email,
+              display_name: authData.user.email || 'User'
+            }
+            console.log('No profile found, using minimal data:', userData)
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error)
+          // Fallback to minimal user data
+          userData = {
+            id: authData.user.id,
+            role: userRole,
+            email: authData.user.email,
+            display_name: authData.user.email || 'User'
+          }
+        }
       }
+
+      if (userData) {
+        login(userData as any)
+
+        // Redirect to appropriate dashboard
+        if (userRole === "client") {
+          router.push("/dashboard")
+        } else {
+          router.push("/chef/dashboard")
+        }
+      }
+
     } catch (error) {
       console.error('Login error:', error)
+      alert('Something went wrong during login. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -63,26 +101,33 @@ export function LoginForm() {
 
   const handleGoogleLogin = async (userRole: "client" | "chef") => {
     setIsLoading(true)
-    // Simulate Google OAuth
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    
+    try {
+      const supabase = createClient()
+      
+      // Sign in with Google OAuth
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            role: userRole
+          }
+        }
+      })
 
-    const userData = {
-      id: Math.random().toString(36).substr(2, 9),
-      role: userRole,
-      email: "user.google@example.com",
-      display_name: "user.google@example.com"
-      // Keep other fields undefined until user adds them
+      if (error) {
+        console.error('Google login failed:', error)
+        alert(`Google login failed: ${error.message}`)
+      }
+      
+      // The redirect will happen automatically if successful
+    } catch (error) {
+      console.error('Google login error:', error)
+      alert('Something went wrong with Google login. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
-
-    login(userData)
-
-    if (userRole === "client") {
-      router.push("/dashboard")
-    } else {
-      router.push("/chef/dashboard")
-    }
-
-    setIsLoading(false)
   }
 
   return (
