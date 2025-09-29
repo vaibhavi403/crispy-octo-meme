@@ -11,12 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/contexts/auth-context"
+import { ProfileButton } from "@/components/profile-button"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  // Mock authentication state - in real app, this would come from auth context
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userType, setUserType] = useState<"customer" | "chef" | "admin">("customer")
+  const { isAuthenticated, user, logout } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -48,7 +48,7 @@ export function Header() {
           <div className="hidden md:flex items-center space-x-4">
             {!isAuthenticated ? (
               <>
-                <Link href="/auth/login">
+                <Link href="/login">
                   <Button variant="ghost">Login</Button>
                 </Link>
                 <Link href="/auth/signup">
@@ -59,55 +59,7 @@ export function Header() {
                 </Link>
               </>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    <span>Account</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {userType === "customer" && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard">Dashboard</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/bookings">My Bookings</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/profile">Profile</Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {userType === "chef" && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/chef/dashboard">Chef Dashboard</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/chef/profile">Manage Profile</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/chef/bookings">My Bookings</Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {userType === "admin" && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin">Admin Panel</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuItem>Support</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setIsAuthenticated(false)}>Logout</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ProfileButton />
             )}
           </div>
 
@@ -136,7 +88,7 @@ export function Header() {
 
               {!isAuthenticated ? (
                 <div className="flex flex-col space-y-2 pt-4 border-t">
-                  <Link href="/auth/login">
+                  <Link href="/login">
                     <Button variant="ghost" className="w-full">
                       Login
                     </Button>
@@ -152,7 +104,17 @@ export function Header() {
                 </div>
               ) : (
                 <div className="flex flex-col space-y-2 pt-4 border-t">
-                  {userType === "customer" && (
+                  <div className="flex items-center gap-3 p-3 mb-2 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-center h-8 w-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full text-white font-medium text-sm">
+                      {user?.role === "chef" ? "👨‍🍳" : ""}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{user?.display_name || `${user?.first_name} ${user?.last_name}`}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+                    </div>
+                  </div>
+                  
+                  {user?.role === "client" && (
                     <>
                       <Link href="/dashboard">
                         <Button variant="ghost" className="w-full justify-start">
@@ -166,7 +128,7 @@ export function Header() {
                       </Link>
                     </>
                   )}
-                  {userType === "chef" && (
+                  {user?.role === "chef" && (
                     <>
                       <Link href="/chef/dashboard">
                         <Button variant="ghost" className="w-full justify-start">
@@ -180,7 +142,7 @@ export function Header() {
                       </Link>
                     </>
                   )}
-                  {userType === "admin" && (
+                  {user?.userType === "admin" && (
                     <Link href="/admin">
                       <Button variant="ghost" className="w-full justify-start">
                         Admin Panel
@@ -193,7 +155,7 @@ export function Header() {
                   <Button
                     variant="ghost"
                     className="w-full justify-start text-red-600"
-                    onClick={() => setIsAuthenticated(false)}
+                    onClick={logout}
                   >
                     Logout
                   </Button>

@@ -12,36 +12,99 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { ChefHat, Mail, Phone, Eye, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
+import { createProfile, getProfile } from "@/utils/supabase/profiles"
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [loginType, setLoginType] = useState<"email" | "phone">("email")
   const router = useRouter()
+  const { login } = useAuth()
 
-  const handleLogin = async (e: React.FormEvent, userType: "customer" | "chef") => {
+  const handleLogin = async (e: React.FormEvent, userRole: "client" | "chef") => {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    // Mock successful login - redirect to appropriate dashboard
-    if (userType === "customer") {
-      router.push("/dashboard")
-    } else {
-      router.push("/chef/dashboard")
+      // Create mock user data
+      const userId = Math.random().toString(36).substr(2, 9)
+      const userData = {
+        id: userId,
+        role: userRole,
+        email: loginType === "email" ? "user@example.com" : undefined,
+        phone: loginType === "phone" ? "+91 98765 43210" : undefined,
+        first_name: userRole === "client" ? "John" : "Chef",
+        last_name: userRole === "client" ? "Doe" : "Priya",
+        display_name: userRole === "client" ? "John Doe" : "Chef Priya",
+        profile_image_path: userRole === "client" ? "/placeholder-user.jpg" : "/professional-indian-female-chef-smiling-in-kitchen.jpg"
+      }
+
+      // Try to get existing profile from Supabase
+      console.log('Checking for existing profile...')
+      const { data: existingProfile, error: fetchError } = await getProfile(userId)
+      
+      if (!existingProfile && !fetchError) {
+        // Create profile in Supabase if it doesn't exist
+        console.log('Creating new profile in Supabase...')
+        const { data: newProfile, error: createError } = await createProfile({
+          id: userId,
+          role: userRole,
+          email: userData.email,
+          phone: userData.phone,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          display_name: userData.display_name,
+          profile_image_path: userData.profile_image_path
+        })
+        
+        if (createError) {
+          console.error('Error creating profile:', createError)
+        } else {
+          console.log('Profile created successfully:', newProfile)
+        }
+      } else if (existingProfile) {
+        console.log('Using existing profile:', existingProfile)
+        // Use existing profile data
+        Object.assign(userData, existingProfile)
+      }
+
+      login(userData)
+
+      // Redirect to appropriate dashboard
+      if (userRole === "client") {
+        router.push("/dashboard")
+      } else {
+        router.push("/chef/dashboard")
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
-  const handleGoogleLogin = async (userType: "customer" | "chef") => {
+  const handleGoogleLogin = async (userRole: "client" | "chef") => {
     setIsLoading(true)
     // Simulate Google OAuth
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    if (userType === "customer") {
+    const userData = {
+      id: Math.random().toString(36).substr(2, 9),
+      role: userRole,
+      email: "user.google@example.com",
+      first_name: userRole === "client" ? "Google" : "Chef",
+      last_name: userRole === "client" ? "User" : "Google",
+      display_name: userRole === "client" ? "Google User" : "Chef Google",
+      profile_image_path: userRole === "client" ? "/placeholder-user.jpg" : "/professional-indian-female-chef-smiling-in-kitchen.jpg"
+    }
+
+    login(userData)
+
+    if (userRole === "client") {
       router.push("/dashboard")
     } else {
       router.push("/chef/dashboard")
@@ -60,18 +123,18 @@ export function LoginForm() {
 
       <Tabs defaultValue="customer" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="customer">Customer</TabsTrigger>
+          <TabsTrigger value="client">Client</TabsTrigger>
           <TabsTrigger value="chef">Chef</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="customer">
+        <TabsContent value="client">
           <Card>
             <CardHeader>
-              <CardTitle>Customer Login</CardTitle>
+              <CardTitle>Client Login</CardTitle>
               <CardDescription>Access your bookings and find amazing chefs</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <form onSubmit={(e) => handleLogin(e, "customer")} className="space-y-4">
+              <form onSubmit={(e) => handleLogin(e, "client")} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Login with</Label>
                   <div className="flex gap-2">
@@ -150,7 +213,7 @@ export function LoginForm() {
               <Button
                 variant="outline"
                 className="w-full bg-transparent"
-                onClick={() => handleGoogleLogin("customer")}
+                onClick={() => handleGoogleLogin("client")}
                 disabled={isLoading}
               >
                 <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
