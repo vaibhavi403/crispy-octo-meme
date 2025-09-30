@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Calendar, Clock, MapPin, Star, Search, Plus, Bell, User } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/contexts/auth-context"
 
 // Mock data
 const upcomingBookings = [
@@ -82,6 +83,10 @@ const notifications = [
 
 export function CustomerDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
+  const { user } = useAuth()
+
+  // Get user's display name
+  const userName = user?.display_name || user?.first_name || "there"
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,7 +97,7 @@ export function CustomerDashboard() {
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Welcome back, Anita!</h1>
+              <h1 className="text-3xl font-bold">Welcome back, {userName}!</h1>
               <p className="text-muted-foreground">Manage your bookings and discover amazing chefs</p>
             </div>
             <div className="flex gap-3">
@@ -366,11 +371,11 @@ export function CustomerDashboard() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Full Name</label>
-                      <Input defaultValue="Anita Patel" />
+                      <Input defaultValue={user?.display_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || ''} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Email</label>
-                      <Input defaultValue="anita.patel@email.com" />
+                      <Input defaultValue={user?.email || ''} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Phone</label>

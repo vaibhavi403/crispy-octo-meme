@@ -12,42 +12,125 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { ChefHat, Mail, Phone, Eye, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
+import { createProfile, getProfile } from "@/utils/supabase/profiles"
+import { createClient } from "@/utils/supabase/client"
+import { ensureUserProfile } from "@/utils/supabase/ensure-profile"
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [loginType, setLoginType] = useState<"email" | "phone">("email")
   const router = useRouter()
+  const { login } = useAuth()
 
-  const handleLogin = async (e: React.FormEvent, userType: "customer" | "chef") => {
+  const handleLogin = async (e: React.FormEvent, userRole: "client" | "chef") => {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      const formData = new FormData(e.target as HTMLFormElement)
+      const emailOrPhone = formData.get("emailOrPhone") as string
+      const password = formData.get("password") as string
 
-    // Mock successful login - redirect to appropriate dashboard
-    if (userType === "customer") {
-      router.push("/dashboard")
-    } else {
-      router.push("/chef/dashboard")
+      const supabase = createClient()
+
+      // Try to sign in with Supabase Auth
+      console.log('Attempting Supabase Auth login...')
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: emailOrPhone,
+        password: password
+      })
+
+      if (authError) {
+        console.error('Supabase Auth login failed:', authError)
+        alert(`Login failed: ${authError.message}`)
+        setIsLoading(false)
+        return
+      }
+
+      console.log('Supabase Auth login successful:', authData)
+
+      // Ensure user has a profile (create one if they don't)
+      let userData
+      if (authData.user) {
+        try {
+          console.log('Ensuring user has a profile...')
+          const profileResult = await ensureUserProfile(authData.user.id, { role: userRole })
+          
+          if (profileResult.data) {
+            userData = profileResult.data
+            console.log('Profile loaded/created:', userData)
+          } else {
+            console.error('Failed to ensure profile:', profileResult.error)
+            // Fallback to minimal user data
+            userData = {
+              id: authData.user.id,
+              role: userRole,
+              email: authData.user.email,
+              display_name: authData.user.email || 'User'
+            }
+          }
+        } catch (error) {
+          console.error('Error ensuring profile:', error)
+          // Fallback to minimal user data
+          userData = {
+            id: authData.user.id,
+            role: userRole,
+            email: authData.user.email,
+            display_name: authData.user.email || 'User'
+          }
+        }
+      }
+
+      if (userData) {
+        login(userData as any)
+
+        // Redirect to appropriate dashboard
+        if (userRole === "client") {
+          router.push("/dashboard")
+        } else {
+          router.push("/chef/dashboard")
+        }
+      }
+
+    } catch (error) {
+      console.error('Login error:', error)
+      alert('Something went wrong during login. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
-  const handleGoogleLogin = async (userType: "customer" | "chef") => {
+  const handleGoogleLogin = async (userRole: "client" | "chef") => {
     setIsLoading(true)
-    // Simulate Google OAuth
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    
+    try {
+      const supabase = createClient()
+      
+      // Sign in with Google OAuth
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            role: userRole
+          }
+        }
+      })
 
-    if (userType === "customer") {
-      router.push("/dashboard")
-    } else {
-      router.push("/chef/dashboard")
+      if (error) {
+        console.error('Google login failed:', error)
+        alert(`Google login failed: ${error.message}`)
+      }
+      
+      // The redirect will happen automatically if successful
+    } catch (error) {
+      console.error('Google login error:', error)
+      alert('Something went wrong with Google login. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   return (
@@ -60,18 +143,18 @@ export function LoginForm() {
 
       <Tabs defaultValue="customer" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="customer">Customer</TabsTrigger>
+          <TabsTrigger value="client">Client</TabsTrigger>
           <TabsTrigger value="chef">Chef</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="customer">
+        <TabsContent value="client">
           <Card>
             <CardHeader>
-              <CardTitle>Customer Login</CardTitle>
+              <CardTitle>Client Login</CardTitle>
               <CardDescription>Access your bookings and find amazing chefs</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <form onSubmit={(e) => handleLogin(e, "customer")} className="space-y-4">
+              <form onSubmit={(e) => handleLogin(e, "client")} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Login with</Label>
                   <div className="flex gap-2">
@@ -100,6 +183,7 @@ export function LoginForm() {
                   <Label htmlFor="customer-login">{loginType === "email" ? "Email Address" : "Phone Number"}</Label>
                   <Input
                     id="customer-login"
+                    name="emailOrPhone"
                     type={loginType === "email" ? "email" : "tel"}
                     placeholder={loginType === "email" ? "Enter your email" : "Enter your phone number"}
                     required
@@ -111,6 +195,7 @@ export function LoginForm() {
                   <div className="relative">
                     <Input
                       id="customer-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       required
@@ -150,7 +235,7 @@ export function LoginForm() {
               <Button
                 variant="outline"
                 className="w-full bg-transparent"
-                onClick={() => handleGoogleLogin("customer")}
+                onClick={() => handleGoogleLogin("client")}
                 disabled={isLoading}
               >
                 <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
@@ -220,6 +305,7 @@ export function LoginForm() {
                   <Label htmlFor="chef-login">{loginType === "email" ? "Email Address" : "Phone Number"}</Label>
                   <Input
                     id="chef-login"
+                    name="emailOrPhone"
                     type={loginType === "email" ? "email" : "tel"}
                     placeholder={loginType === "email" ? "Enter your email" : "Enter your phone number"}
                     required
@@ -231,6 +317,7 @@ export function LoginForm() {
                   <div className="relative">
                     <Input
                       id="chef-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       required
@@ -293,13 +380,6 @@ export function LoginForm() {
                 </svg>
                 Continue with Google
               </Button>
-
-              <p className="text-center text-sm text-muted-foreground">
-                New chef?{" "}
-                <Link href="/chef/join" className="text-primary hover:underline">
-                  Join as Chef
-                </Link>
-              </p>
             </CardContent>
           </Card>
         </TabsContent>

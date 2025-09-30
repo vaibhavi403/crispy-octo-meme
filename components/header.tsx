@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, ChefHat, User } from "lucide-react"
+import { Menu, X, ChefHat, User, LogOut } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,12 +11,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/contexts/auth-context"
+import { ProfileButton } from "@/components/profile-button"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  // Mock authentication state - in real app, this would come from auth context
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userType, setUserType] = useState<"customer" | "chef" | "admin">("customer")
+  const { isAuthenticated, user, logout, isLoading } = useAuth()
+
+  // Debug logging
+  console.log("Header render - isAuthenticated:", isAuthenticated, "user:", user, "isLoading:", isLoading)
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -46,68 +49,33 @@ export function Header() {
 
           {/* Desktop Auth/User Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            {!isAuthenticated ? (
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ) : !isAuthenticated ? (
               <>
-                <Link href="/auth/login">
+                <Link href="/login">
                   <Button variant="ghost">Login</Button>
                 </Link>
-                <Link href="/auth/signup">
-                  <Button className="bg-orange-500 hover:bg-orange-600">Sign Up</Button>
-                </Link>
-                <Link href="/chef/join">
-                  <Button variant="secondary">Join as Chef</Button>
+                <Link href="/signup">
+                  <Button>Sign Up</Button>
                 </Link>
               </>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    <span>Account</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {userType === "customer" && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard">Dashboard</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/bookings">My Bookings</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/profile">Profile</Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {userType === "chef" && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/chef/dashboard">Chef Dashboard</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/chef/profile">Manage Profile</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/chef/bookings">My Bookings</Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {userType === "admin" && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin">Admin Panel</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuItem>Support</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setIsAuthenticated(false)}>Logout</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <>
+                <ProfileButton />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={logout}
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </>
             )}
           </div>
 
@@ -134,25 +102,37 @@ export function Header() {
                 About
               </Link>
 
-              {!isAuthenticated ? (
+              {isLoading ? (
                 <div className="flex flex-col space-y-2 pt-4 border-t">
-                  <Link href="/auth/login">
+                  <div className="w-full h-10 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="w-full h-10 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ) : !isAuthenticated ? (
+                <div className="flex flex-col space-y-2 pt-4 border-t">
+                  <Link href="/login">
                     <Button variant="ghost" className="w-full">
                       Login
                     </Button>
                   </Link>
-                  <Link href="/auth/signup">
-                    <Button className="w-full bg-orange-500 hover:bg-orange-600">Sign Up</Button>
-                  </Link>
-                  <Link href="/chef/join">
-                    <Button variant="secondary" className="w-full">
-                      Join as Chef
+                  <Link href="/signup">
+                    <Button className="w-full">
+                      Sign Up
                     </Button>
                   </Link>
                 </div>
               ) : (
                 <div className="flex flex-col space-y-2 pt-4 border-t">
-                  {userType === "customer" && (
+                  <div className="flex items-center gap-3 p-3 mb-2 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-center h-8 w-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full text-white font-medium text-sm">
+                      {user?.role === "chef" ? "👨‍🍳" : ""}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{user?.display_name || `${user?.first_name} ${user?.last_name}`}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+                    </div>
+                  </div>
+                  
+                  {user?.role === "client" && (
                     <>
                       <Link href="/dashboard">
                         <Button variant="ghost" className="w-full justify-start">
@@ -166,7 +146,7 @@ export function Header() {
                       </Link>
                     </>
                   )}
-                  {userType === "chef" && (
+                  {user?.role === "chef" && (
                     <>
                       <Link href="/chef/dashboard">
                         <Button variant="ghost" className="w-full justify-start">
@@ -180,20 +160,13 @@ export function Header() {
                       </Link>
                     </>
                   )}
-                  {userType === "admin" && (
-                    <Link href="/admin">
-                      <Button variant="ghost" className="w-full justify-start">
-                        Admin Panel
-                      </Button>
-                    </Link>
-                  )}
                   <Button variant="ghost" className="w-full justify-start">
                     Settings
                   </Button>
                   <Button
                     variant="ghost"
                     className="w-full justify-start text-red-600"
-                    onClick={() => setIsAuthenticated(false)}
+                    onClick={logout}
                   >
                     Logout
                   </Button>
